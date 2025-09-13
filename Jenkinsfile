@@ -65,7 +65,7 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    docker.withRegistry(credentialsId: 'docker', toolName: 'docker') {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
                         sh '''
                             echo "Building Docker image..."
                             docker build -t ramm1004/bms:latest -f bookmyshow-app/Dockerfile bookmyshow-app
