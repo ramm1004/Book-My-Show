@@ -65,13 +65,14 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+                    docker.withRegistry(credentialsId: 'docker', toolName: 'docker') {
                         sh '''
                             echo "Building Docker image..."
-                            docker build -t kastrov/bms:latest -f bookmyshow-app/Dockerfile bookmyshow-app
+                            docker build -t ramm1004/bms:latest -f bookmyshow-app/Dockerfile bookmyshow-app
+
 
                             echo "Pushing Docker image to DockerHub..."
-                            docker push kastrov/bms:latest
+                            docker push ramm1004/bms:latest
                         '''
                     }
                 }
