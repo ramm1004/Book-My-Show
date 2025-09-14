@@ -104,29 +104,28 @@ pipeline {
         stage('Deploy to EKS Cluster') {
             steps {
                 withAWS(region: "${AWS_REGION}", credentials: 'aws') {
-                   sh '''
-                      echo "Verifying AWS credentials..."
-                      aws sts get-caller-identity
+                    sh '''
+                        echo "Verifying AWS credentials..."
+                        aws sts get-caller-identity
 
-                      echo "Configuring kubectl for EKS cluster..."
-                      aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+                        echo "Configuring kubectl for EKS cluster..."
+                        aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
 
-                      echo "Verifying kubeconfig..."
-                      kubectl config view
+                        echo "Verifying kubeconfig..."
+                        kubectl config view
 
-                      echo "Deploying application to EKS..."
-                    kubectl apply -f deployment.yml -n sairam-namespace
-                    kubectl apply -f service.yml -n sairam-namespace
+                        echo "Deploying application to EKS..."
+                        kubectl apply -f deployment.yml -n sairam-namespace
+                        kubectl apply -f service.yml -n sairam-namespace
 
-                    echo "Verifying deployment..."
-                    kubectl get pods -n sairam-namespace
-                    kubectl get svc -n sairam-namespace
-                '''
-             }
-          }
+                        echo "Verifying deployment..."
+                        kubectl get pods -n sairam-namespace
+                        kubectl get svc -n sairam-namespace
+                    '''
+                }
+            }
         }
     }
-    
 
     post {
         always {
@@ -143,6 +142,6 @@ pipeline {
                 to: 'sairampentapati007@gmail.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
             )
-        }
-    }
+        }
+    }
 }
