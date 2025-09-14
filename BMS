@@ -7,10 +7,10 @@ pipeline {
     }
 
     environment {
-        SCANNER_HOME = tool 'sonar-scanner'
-        DOCKER_IMAGE = 'ramm1004/bms:latest'
+        SCANNER_HOME   = tool 'sonar-scanner'
+        DOCKER_IMAGE   = 'ramm1004/bms:latest'
         EKS_CLUSTER_NAME = 'Team2-eks-cluster'
-        AWS_REGION = 'eu-west-3'
+        AWS_REGION     = 'eu-west-3'
     }
 
     stages {
@@ -30,11 +30,15 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar-server') {
-                    sh '''
-                        $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=BMS \
-                        -Dsonar.projectKey=BMS
-                    '''
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            $SCANNER_HOME/bin/sonar-scanner \
+                              -Dsonar.projectKey=BMS \
+                              -Dsonar.projectName=BMS \
+                              -Dsonar.host.url=http://13.39.86.184:9000 \
+                              -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
                 }
             }
         }
@@ -52,7 +56,6 @@ pipeline {
                 dir('bookmyshow-app') {
                     sh '''
                         echo "Installing Node.js dependencies..."
-                        ls -la
                         if [ -f package.json ]; then
                             rm -rf node_modules package-lock.json
                             npm install
@@ -72,7 +75,6 @@ pipeline {
                         sh '''
                             echo "Building Docker image..."
                             docker build -t ramm1004/bms:latest -f bookmyshow-app/Dockerfile bookmyshow-app
-
 
                             echo "Pushing Docker image to DockerHub..."
                             docker push ramm1004/bms:latest
@@ -101,33 +103,32 @@ pipeline {
                 '''
             }
         }
-    
+
         stage('Deploy to EKS Cluster') {
             steps {
                 withAWS(region: "${AWS_REGION}", credentials: 'aws') {
-                   sh '''
-                      echo "Verifying AWS credentials..."
-                      aws sts get-caller-identity
+                    sh '''
+                        echo "Verifying AWS credentials..."
+                        aws sts get-caller-identity
 
-                      echo "Configuring kubectl for EKS cluster..."
-                      aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+                        echo "Configuring kubectl for EKS cluster..."
+                        aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
 
-                      echo "Verifying kubeconfig..."
-                      kubectl config view
+                        echo "Verifying kubeconfig..."
+                        kubectl config current-context
 
-                      echo "Deploying application to EKS..."
-                    kubectl apply -f deployment.yml -n sairam-namespace
-                    kubectl apply -f service.yml -n sairam-namespace
+                        echo "Deploying application to EKS..."
+                        kubectl apply -f deployment.yml -n sairam-namespace
+                        kubectl apply -f service.yml -n sairam-namespace
 
-                    echo "Verifying deployment..."
-                    kubectl get pods -n sairam-namespace
-                    kubectl get svc -n sairam-namespace
-                '''
-             }
-          }
+                        echo "Verifying deployment..."
+                        kubectl get pods -n sairam-namespace
+                        kubectl get svc -n sairam-namespace
+                    '''
+                }
+            }
         }
     }
-    
 
     post {
         always {
@@ -144,6 +145,6 @@ pipeline {
                 to: 'sairampentapati007@gmail.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
             )
-        }
-    }
+        }
+    }
 }
