@@ -28,28 +28,31 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar-server') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh '''
-                            $SCANNER_HOME/bin/sonar-scanner \
-                              -Dsonar.projectKey=BMS \
-                              -Dsonar.projectName=BMS \
-                              -Dsonar.host.url=http://13.39.86.184:9000 \
-                              -Dsonar.login=$SONAR_TOKEN
-                        '''
-                    }
-                }
-            }
-        }
+    steps {
+        script {
+            // Define sonar-scanner tool (must be configured in Jenkins → Global Tool Configuration)
+            def scannerHome = tool 'sonar-scanner'
 
-        stage('Quality Gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: true, credentialsId: 'sonarqube'
-                }
+            withSonarQubeEnv('sonar-server') {
+                sh """
+                    ${scannerHome}/bin/sonar-scanner \
+                      -Dsonar.projectKey=BMS \
+                      -Dsonar.projectName=BMS
+                """
             }
         }
+    }
+}
+
+stage('Quality Gate') {
+    steps {
+        script {
+            // Use the credential ID of your SonarQube token here
+            waitForQualityGate abortPipeline: true, credentialsId: 'sonarqube'
+        }
+    }
+}
+
 
         stage('Install Dependencies') {
             steps {
