@@ -11,7 +11,7 @@ pipeline {
         DOCKER_IMAGE = 'ramm1004/bms:latest'
         EKS_CLUSTER_NAME = 'Team2-eks-cluster'
         AWS_REGION = 'eu-west-3'
-    }
+    } 
 
     stages {
         stage('Clean Workspace') {
